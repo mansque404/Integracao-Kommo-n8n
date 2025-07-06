@@ -1,0 +1,185 @@
+{
+  "name": "Kommo Lead Auto Move + Telegram Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kommo-lead-hook"
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "\nconst leadId = items[0].json.lead_id;\nconst score = items[0].json.scoring;\n\nif (!leadId || !score) {\n  throw new Error(\"lead_id e scoring s\u00e3o obrigat\u00f3rios\");\n}\n\nreturn [{ json: { lead_id: leadId, scoring: score } }];\n"
+      },
+      "name": "Valida Entrada",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "GET",
+        "url": "https://yourdomain.kommo.com/api/v4/leads/{{$json[\"lead_id\"]}}",
+        "authentication": "predefinedCredentialType",
+        "options": {}
+      },
+      "name": "Buscar Lead Kommo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        600,
+        300
+      ],
+      "credentials": {
+        "httpBasicAuth": "Kommo OAuth2"
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json[\"scoring\"]}}",
+              "operation": "largerEqual",
+              "value2": 80
+            }
+          ]
+        }
+      },
+      "name": "Score \u2265 80?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "PATCH",
+        "url": "https://yourdomain.kommo.com/api/v4/leads/{{$json[\"lead_id\"]}}",
+        "authentication": "predefinedCredentialType",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "\n{\n  \"status_id\": \"678901\",\n  \"pipeline_id\": \"123456\"\n}\n"
+      },
+      "name": "Mover Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        200
+      ],
+      "credentials": {
+        "httpBasicAuth": "Kommo OAuth2"
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_CHAT_ID",
+        "text": "Lead {{$json[\"lead_id\"]}} movido com sucesso \ud83c\udf89"
+      },
+      "name": "Alerta Telegram Sucesso",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        200
+      ],
+      "credentials": {
+        "telegramApi": "Telegram Bot"
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_CHAT_ID",
+        "text": "\u274c Falha ao processar lead: {{$json[\"lead_id\"] || 'ID desconhecido'}}"
+      },
+      "name": "Alerta Telegram Erro",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        400
+      ],
+      "credentials": {
+        "telegramApi": "Telegram Bot"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Valida Entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valida Entrada": {
+      "main": [
+        [
+          {
+            "node": "Buscar Lead Kommo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Lead Kommo": {
+      "main": [
+        [
+          {
+            "node": "Score \u2265 80?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score \u2265 80?": {
+      "main": [
+        [
+          {
+            "node": "Mover Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alerta Telegram Erro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mover Lead": {
+      "main": [
+        [
+          {
+            "node": "Alerta Telegram Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false
+}

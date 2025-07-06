@@ -1,0 +1,41 @@
+[
+  {
+    "name": "Webhook",
+    "type": "Webhook",
+    "path": "/kommo-hook"
+  },
+  {
+    "name": "Function",
+    "type": "Function",
+    "code": "// valida lead_id e score"
+  },
+  {
+    "name": "HTTP GET",
+    "type": "HTTP Request",
+    "url": "https://{subdomain}.kommo.com/api/v4/leads/{{lead_id}}"
+  },
+  {
+    "name": "Condition",
+    "type": "IF",
+    "check": "scoring ≥ 80"
+  },
+  {
+    "name": "Update Lead",
+    "type": "HTTP Request",
+    "method": "PATCH",
+    "url": "https://{subdomain}.kommo.com/api/v4/leads/{{lead_id}}",
+    "body": {
+      "status_id": "678901",
+      "pipeline_id": "123456"
+    }
+  },
+  {
+    "name": "Error Trigger",
+    "type": "Error Trigger"
+  },
+  {
+    "name": "Slack Notify",
+    "type": "Slack",
+    "message": "Erro ao mover lead {{lead_id}}"
+  }
+]
