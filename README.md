@@ -1,6 +1,6 @@
 # Integração n8n ↔ Kommo CRM
 
-Este projeto apresenta a solução completa para o desafio técnico da vaga de Desenvolvedor(a) de Integrações e Automação, com foco em automatizar o movimento de leads no Kommo CRM usando o n8n.
+Este projeto apresenta a solução completa para um serviço de Integrações e Automação, com foco em automatizar o movimento de leads no Kommo CRM usando o n8n.
 
 ## 📁 Conteúdo
 
